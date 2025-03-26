@@ -1,0 +1,59 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets
+        run: |
+          missing_secrets=()
+          if [ "${{ secrets.APP_NAME }}" = "" ]; then missing_secrets+=("APP_NAME"); fi
+          if [ "${{ secrets.APP_ENV }}" = "" ]; then missing_secrets+=("APP_ENV"); fi
+          if [ "${{ secrets.APP_DEBUG }}" = "" ]; then missing_secrets+=("APP_DEBUG"); fi
+          if [ "${{ secrets.APP_URL }}" = "" ]; then missing_secrets+=("APP_URL"); fi
+          if [ "${{ secrets.DB_PORT }}" = "" ]; then missing_secrets+=("DB_PORT"); fi
+          if [ "${{ secrets.DB_DATABASE }}" = "" ]; then missing_secrets+=("DB_DATABASE"); fi
+          if [ "${{ secrets.DB_USERNAME }}" = "" ]; then missing_secrets+=("DB_USERNAME"); fi
+          if [ "${{ secrets.DB_PASSWORD }}" = "" ]; then missing_secrets+=("DB_PASSWORD"); fi
+          
+          if [ ${#missing_secrets[@]} -ne 0 ]; then
+            echo "Error: The following secrets are not set:"
+            printf '%s\n' "${missing_secrets[@]}"
+            exit 1
+          fi
+
+  build:
+    needs: check-secrets
+    runs-on: [self-hosted, linux, ARM64]
+    env:
+      APP_NAME: ${{ secrets.APP_NAME }}
+      APP_ENV: ${{ secrets.APP_ENV }}
+      APP_DEBUG: ${{ secrets.APP_DEBUG }}
+      APP_URL: ${{ secrets.APP_URL }}
+      LOG_CHANNEL: stack
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_DATABASE: ${{ secrets.DB_DATABASE }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      BRANCH_NAME: ${{ github.ref_name }}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BROADCAST_DRIVER: log
+      CACHE_DRIVER: redis
+      FILESYSTEM_DISK: local
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: redis
+      SESSION_LIFETIME: 120
+    steps:
+      - run: sudo rm -rf ../laravel_shop
+      - uses: actions/checkout@v1
+      - run: docker compose build --no-cache
+      - run: docker compose down
+      - run: docker compose up -d

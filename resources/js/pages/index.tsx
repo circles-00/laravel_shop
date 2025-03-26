@@ -1,17 +1,8 @@
-import { TPageProps } from "@/types"
-import { usePage } from "@inertiajs/react"
 import { ArrowRight } from "lucide-react"
 import { useRef } from "react"
 
-
-interface IHomePageProps extends TPageProps {
-    data: string
-}
-
 export default function HomePage() {
-    const { data } = usePage<IHomePageProps>().props
     const contactSectionRef = useRef<HTMLDivElement | null>(null)
-
 
     return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
