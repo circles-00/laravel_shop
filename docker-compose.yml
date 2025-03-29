@@ -52,7 +52,7 @@ services:
     container_name: laravel_db-${BRANCH_NAME}
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE}-${BRANCH_NAME}
+      POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
